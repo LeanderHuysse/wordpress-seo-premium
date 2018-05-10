@@ -127,36 +127,6 @@ if ( ! class_exists( 'Yoast_License_Manager', false ) ) {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				return;
 			}
-
-			// show notice if license is invalid
-			if ( $this->show_license_notice() && ! $this->license_is_valid() ) {
-				if ( $this->get_license_key() == '' ) {
-					$message = __( '<b>Warning!</b> You didn\'t set your %s license key yet, which means you\'re missing out on updates and support! <a href="%s">Enter your license key</a> or <a href="%s" target="_blank">get a license here</a>.' );
-				} else {
-					$message = __( '<b>Warning!</b> Your %s license is inactive which means you\'re missing out on updates and support! <a href="%s">Activate your license</a> or <a href="%s" target="_blank">get a license here</a>.' );
-				}
-				?>
-                <div class="notice notice-error yoast-notice-error">
-                    <p><?php printf( __( $message, $this->product->get_text_domain() ), $this->product->get_item_name(), $this->product->get_license_page_url(), $this->product->get_tracking_url( 'activate-license-notice' ) ); ?></p>
-                </div>
-				<?php
-			}
-
-			// show notice if external requests are blocked through the WP_HTTP_BLOCK_EXTERNAL constant
-			if ( defined( "WP_HTTP_BLOCK_EXTERNAL" ) && WP_HTTP_BLOCK_EXTERNAL === true ) {
-
-				// check if our API endpoint is in the allowed hosts
-				$host = parse_url( $this->product->get_api_url(), PHP_URL_HOST );
-
-				if ( ! defined( "WP_ACCESSIBLE_HOSTS" ) || stristr( WP_ACCESSIBLE_HOSTS, $host ) === false ) {
-					?>
-                    <div class="notice notice-error yoast-notice-error">
-                        <p><?php printf( __( '<b>Warning!</b> You\'re blocking external requests which means you won\'t be able to get %s updates. Please add %s to %s.', $this->product->get_text_domain() ), $this->product->get_item_name(), '<strong>' . $host . '</strong>', '<code>WP_ACCESSIBLE_HOSTS</code>' ); ?></p>
-                    </div>
-					<?php
-				}
-
-			}
 		}
 
 		/**
@@ -175,33 +145,7 @@ if ( ! class_exists( 'Yoast_License_Manager', false ) ) {
 		 * @return boolean True if the license is now activated, false if not
 		 */
 		public function activate_license() {
-
-			$result = $this->call_license_api( 'activate' );
-
-			if ( $result ) {
-
-				// show success notice if license is valid
-				if ( $result->license === 'valid' ) {
-					$success = true;
-					$message = $this->get_successful_activation_message( $result );
-				} else {
-					$this->remote_license_activation_failed = true;
-
-					$success = false;
-					$message = $this->get_unsuccessful_activation_message( $result );
-				}
-
-				// Append custom HTML message to default message.
-				$message .= $this->get_custom_message( $result );
-
-				if ( $this->show_license_notice() ) {
-					$this->set_notice( $message, $success );
-				}
-
-				$this->set_license_status( $result->license );
-			}
-
-			return $this->license_is_valid();
+			return true;
 		}
 
 		/**
@@ -281,32 +225,7 @@ if ( ! class_exists( 'Yoast_License_Manager', false ) ) {
 		 */
 		protected function call_license_api( $action ) {
 
-			// don't make a request if license key is empty
-			if ( $this->get_license_key() === '' ) {
-				return false;
-			}
-
-			// data to send in our API request
-			$api_params = array(
-				'edd_action' => $action . '_license',
-				'license'    => $this->get_license_key(),
-				'item_name'  => urlencode( trim( $this->product->get_item_name() ) ),
-				'url'        => $this->get_url()
-				// grab the URL straight from the option to prevent filters from breaking it.
-			);
-
-			// create api request url
-			$url = add_query_arg( $api_params, $this->product->get_api_url() );
-
-			require_once dirname( __FILE__ ) . '/class-api-request.php';
-			$request = new Yoast_API_Request( $url );
-
-			if ( $request->is_valid() !== true ) {
-				$this->set_notice( sprintf( __( "Request error: \"%s\" (%scommon license notices%s)", $this->product->get_text_domain() ), $request->get_error_message(), '<a href="http://kb.yoast.com/article/13-license-activation-notices">', '</a>' ), false );
-			}
-
-			// get response
-			return $request->get_response();
+			return false;
 		}
 
 
